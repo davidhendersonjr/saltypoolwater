@@ -4,6 +4,9 @@ import { api, loginUrl, logoutUrl } from "./api.js";
 const MAX_SETUP = 200;
 const MAX_PUNCHLINE = 140;
 
+const msLoginUrl = "/.auth/login/aad?post_login_redirect_uri=/";
+
+
 function msToMidnightUTC() {
   const now = new Date();
   const midnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
@@ -118,7 +121,10 @@ export default function App() {
               <a className="spw-linkbtn" href={logoutUrl}>Sign out</a>
             </>
           ) : (
-            <a className="spw-btn spw-btn-small" href={loginUrl}>Sign in with GitHub</a>
+            <>
+                <a className="spw-btn spw-btn-small" href={loginUrl}>Sign in with GitHub</a>
+                <a className="spw-btn spw-btn-small" href={msLoginUrl}>Sign in with Microsoft</a>
+              </>
           )}
         </div>
 

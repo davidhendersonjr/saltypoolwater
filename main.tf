@@ -56,3 +56,49 @@ resource "azurerm_static_web_app" "spw-swa" {
     COSMOS_KEY      = azurerm_cosmosdb_account.spw-cosmosdb.primary_key
   }
 }
+resource "azurerm_dns_zone" "spw" {
+  name                = "saltypoolwater.com"
+  resource_group_name = azurerm_resource_group.spw-rg.name
+}
+resource "azurerm_dns_txt_record" "ms_verify" {
+  name                = "@"
+  zone_name           = azurerm_dns_zone.spw.name
+  resource_group_name = azurerm_resource_group.spw-rg.name
+  ttl                 = 3600
+  record {
+    value = "MS=ms28032115"
+  } 
+  record {
+    value = azurerm_static_web_app_custom_domain.apex.validation_token
+  }
+}
+# www.saltypoolwater.com
+resource "azurerm_dns_cname_record" "www" {
+  name                = "www"
+  zone_name           = azurerm_dns_zone.spw.name
+  resource_group_name = azurerm_resource_group.spw-rg.name
+  ttl                 = 300
+  record              = azurerm_static_web_app.spw-swa.default_host_name
+}
+
+resource "azurerm_static_web_app_custom_domain" "www" {
+  static_web_app_id = azurerm_static_web_app.spw-swa.id
+  domain_name       = "www.saltypoolwater.com"
+  validation_type   = "cname-delegation"
+  depends_on        = [azurerm_dns_cname_record.www]
+}
+
+# saltypoolwater.com (apex)
+resource "azurerm_static_web_app_custom_domain" "apex" {
+  static_web_app_id = azurerm_static_web_app.spw-swa.id
+  domain_name       = "saltypoolwater.com"
+  validation_type   = "dns-txt-token"
+}
+
+resource "azurerm_dns_a_record" "apex" {
+  name                = "@"
+  zone_name           = azurerm_dns_zone.spw.name
+  resource_group_name = azurerm_resource_group.spw-rg.name
+  ttl                 = 300
+  target_resource_id  = azurerm_static_web_app.spw-swa.id
+}
