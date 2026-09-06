@@ -118,7 +118,7 @@ export default function App() {
           <div className="spw-authrow">
             {signedIn ? (
               <>
-                <span className="spw-who">🧂 {me.userDetails}</span>
+               <span className="spw-who"><SaltShaker filled size={16} /> {me.userDetails}</span>
                 <a className="spw-linkbtn" href={logoutUrl}>Sign out</a>
               </>
             ) : (
