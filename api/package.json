@@ -4,9 +4,9 @@
   "main": "src/functions/*.js",
   "engines": { "node": ">=18" },
   "scripts": { "start": "func start" },
-  "dependencies": {
+    "dependencies": {
     "@azure/functions": "^4.5.0",
-    "@azure/cosmos": "^4.1.1"
-     "@resvg/resvg-js": "^2.6.2"
+    "@azure/cosmos": "^4.1.1",
+    "@resvg/resvg-js": "^2.6.2"
   }
 }
