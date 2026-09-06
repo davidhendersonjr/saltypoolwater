@@ -2,6 +2,7 @@
    Carried over from prototype v2: aqua water, deep-navy ink, coral accent,
    tile-blue borders, dashed "lane line" dividers. */
 @import "./scoring.css";
+@import "./layout.css";
 
 :root {
   --water: #DFF3F7;       /* page background — shallow-end aqua */

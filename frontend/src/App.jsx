@@ -4,6 +4,7 @@ import { SaltShaker, WaterDrop } from "./VoteIcons.jsx";
 import {
   VIEWS, applyView, formatScore, netScore, statusFor, tiersFor, msUntilMidnight,
 } from "./scoring.js";
+   import Sidebar from "./Sidebar.jsx";
 
 const MAX_SETUP = 200;
 const MAX_PUNCHLINE = 140;
@@ -107,7 +108,9 @@ export default function App() {
       : "The pool is empty. Someone go complain.";
 
   return (
-    <div className="spw-shell">
+       <div className="spw-shell">
+     <div className="spw-layout">
+     <main className="spw-main">
             <header className="spw-header">
         <div className="spw-header-text">
           <h1 className="spw-wordmark">
@@ -295,6 +298,9 @@ export default function App() {
           </article>
         );
       })}
+   </main>
+   <Sidebar />
+   </div>
 
       <footer className="spw-foot">
         saltypoolwater.com — keep it petty, keep it anonymous. No naming real people.
