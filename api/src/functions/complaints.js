@@ -21,12 +21,15 @@ app.http("complaints", {
   authLevel: "anonymous",
   route: "complaints",
   handler: async (request, context) => {
-    if (request.method === "GET") {
-      const day = request.query.get("day") || undefined;
-      const items = await db.listComplaints(day);
-      // Never leak userIds to the feed
+        if (request.method === "GET") {
+      const items = await db.listComplaints();
       const publicItems = items.map(({ userId, ...rest }) => rest);
-      return { jsonBody: { day: day || db.today(), complaints: publicItems } };
+
+      const principal = db.getPrincipal(request);
+      const uid = principal?.userId || (!db.useCosmos ? "local-dev-user" : null);
+      const myVotes = uid ? await db.listUserVotes(uid) : {};
+
+      return { jsonBody: { day: db.today(), complaints: publicItems, myVotes } };
     }
 
     // POST — requires login so the daily ration is enforceable

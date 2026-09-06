@@ -141,35 +141,37 @@ export default function App() {
     <div className="spw-shell">
       <div className="spw-layout">
       <main className="spw-main">
-      <header className="spw-header">
-        <img className="spw-logo" src="/logo-icon.svg" alt="" width="72" height="72" />
-        <h1 className="spw-wordmark">
-          <span className="spw-salty">salty</span>poolwater
-        </h1>
-        <p className="spw-tag">One complaint a day. Make it funny.</p>
+            <header className="spw-header">
+        <div className="spw-header-text">
+          <h1 className="spw-wordmark">
+            <span className="spw-salty">salty</span>poolwater
+          </h1>
+          <p className="spw-tag">The shallow end of the internet.</p>
 
-        <div className="spw-authrow">
-          {signedIn ? (
-            <>
-              <span className="spw-who">🧂 {me.userDetails}</span>
-              <a className="spw-linkbtn" href={logoutUrl}>Sign out</a>
-            </>
-          ) : (
-            <>
-              <a className="spw-btn spw-btn-small" href={loginGitHub}>Sign in with GitHub</a>
-              <a className="spw-btn spw-btn-small" href={loginMicrosoft}>Sign in with Microsoft</a>
-            </>
+          <div className="spw-authrow">
+            {signedIn ? (
+              <>
+                <span className="spw-who"><SaltShaker filled size={16} /> {me.userDetails}</span>
+                <a className="spw-linkbtn" href={logoutUrl}>Sign out</a>
+              </>
+            ) : (
+              <>
+                <a className="spw-btn spw-btn-small" href={loginGitHub}>Sign in with GitHub</a>
+                <a className="spw-btn spw-btn-small" href={loginMicrosoft}>Sign in with Microsoft</a>
+              </>
+            )}
+          </div>
+
+          {signedIn && (
+            <div className="spw-ration" role="status">
+              <span className={`dot ${posted ? "dot-used" : "dot-ok"}`} aria-hidden="true"></span>
+              {posted
+                ? `Set performed · next mic at midnight (${countdown})`
+                : "1 complaint left today"}
+            </div>
           )}
         </div>
-
-        {signedIn && (
-          <div className="spw-ration" role="status">
-            <span className={`dot ${posted ? "dot-used" : "dot-ok"}`} aria-hidden="true"></span>
-            {posted
-              ? `Set performed · next mic at midnight (${countdown})`
-              : "1 complaint left today"}
-          </div>
-        )}
+        <img className="spw-logo" src="/logo-icon.svg" alt="" />
       </header>
 
       {error && <div className="spw-error" role="alert">{error}</div>}

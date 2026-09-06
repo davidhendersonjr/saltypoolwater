@@ -195,6 +195,35 @@ async function addComment({ complaintId, day, author, text }) {
   return saveComplaint(complaint);
 }
 
+/** Look up a complaint by id alone (cross-partition, used by share links). */
+async function findComplaint(id) {
+  if (useCosmos) {
+    const { complaints } = await getContainers();
+    const { resources } = await complaints.items
+      .query({ query: "SELECT * FROM c WHERE c.id = @id", parameters: [{ name: "@id", value: id }] })
+      .fetchAll();
+    return resources[0] || null;
+  }
+  return mem.complaints.find((c) => c.id === id) || null;
+}
+
+/** All of one user's votes as { complaintId: 1 | -1 }. Powers the filled-in icons on load. */
+async function listUserVotes(userId) {
+  const out = {};
+  if (useCosmos) {
+    const { votes } = await getContainers();
+    const { resources } = await votes.items
+      .query({
+        query: "SELECT c.complaintId, c.direction FROM c WHERE c.userId = @uid",
+        parameters: [{ name: "@uid", value: userId }],
+      })
+      .fetchAll();
+    for (const v of resources) out[v.complaintId] = v.direction;
+  } else {
+    for (const v of mem.votes) if (v.userId === userId) out[v.complaintId] = v.direction;
+  }
+  return out;
+}
 module.exports = {
   today,
   getPrincipal,
@@ -204,4 +233,6 @@ module.exports = {
   vote,
   addComment,
   useCosmos,
+  findComplaint,
+  listUserVotes,
 };
