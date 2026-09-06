@@ -48,7 +48,7 @@ export default function App() {
   const singleId = (window.location.pathname.match(/^\/p\/([^/]+)/) || [])[1] || null;
 
   async function share(c) {
-    const url = `${window.location.origin}/s/${c.id}`;
+        const url = `${window.location.origin}/api/share/${c.id}`;
     try {
       if (navigator.share) {
         await navigator.share({ title: c.setup, url });
