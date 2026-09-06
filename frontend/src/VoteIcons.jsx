@@ -3,16 +3,30 @@
 // Both take `filled` for the voted state and inherit currentColor.
 
 export function SaltShaker({ filled = false, size = 22 }) {
+  const ink = filled ? "currentColor" : "none";
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true"
-         fill={filled ? "currentColor" : "none"} stroke="currentColor"
+         fill={ink} stroke="currentColor"
          strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round">
-      <path d="M8.5 7.5 V5.5 a3.5 3.5 0 0 1 7 0 V7.5" />
-      <circle cx="10" cy="3.2" r="0.5" fill="currentColor" stroke="none" />
-      <circle cx="12" cy="2.6" r="0.5" fill="currentColor" stroke="none" />
-      <circle cx="14" cy="3.2" r="0.5" fill="currentColor" stroke="none" />
-      <path d="M8.5 7.5 h7 l1 12 a1.5 1.5 0 0 1 -1.5 1.5 h-6 a1.5 1.5 0 0 1 -1.5 -1.5 z" />
-      {!filled && <path d="M8.9 13.5 h6.2" />}
+      <g transform="rotate(-32 12 12)">
+        {/* domed cap */}
+        <path d="M7.6 8.2 a4.4 4.4 0 0 1 8.8 0" />
+        <path d="M7.2 8.2 h9.6" />
+        {/* body: narrow neck flaring to a wide base */}
+        <path d="M8.4 8.2 l-1.5 10.3 a1.4 1.4 0 0 0 1.4 1.5 h7.4 a1.4 1.4 0 0 0 1.4 -1.5 L15.6 8.2" />
+        {!filled && (
+          <>
+            <path d="M7.7 14.6 h8.6" />
+            <circle cx="10.4" cy="5.6" r="0.55" fill="currentColor" stroke="none" />
+            <circle cx="13.6" cy="5.6" r="0.55" fill="currentColor" stroke="none" />
+            <circle cx="12" cy="4.4" r="0.55" fill="currentColor" stroke="none" />
+          </>
+        )}
+      </g>
+      {/* falling salt */}
+      <circle cx="4.4" cy="7.6" r="1" fill="currentColor" stroke="none" />
+      <circle cx="6.8" cy="4.4" r="1" fill="currentColor" stroke="none" />
+      <circle cx="2.8" cy="4" r="1" fill="currentColor" stroke="none" />
     </svg>
   );
 }
