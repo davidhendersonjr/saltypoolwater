@@ -17,7 +17,7 @@
 
 body {
   margin: 0;
-  background: var(--water);
+ 
   color: var(--pool-deep);
   font-family: "Avenir Next", "Trebuchet MS", Verdana, system-ui, sans-serif;
   line-height: 1.45;
