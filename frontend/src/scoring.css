@@ -1,0 +1,29 @@
+/* ---- scoring & vote icons ---- */
+
+.spw-arrow { display: inline-flex; padding: 4px; color: var(--ink-dim); }
+.spw-arrow:hover { color: var(--brine); }
+.spw-arrow.is-on { color: var(--brine); }
+.spw-arrow.is-on.down { color: var(--pool-deep); }
+
+.spw-score { text-align: center; min-width: 44px; }
+.spw-score .n { display: block; font-weight: 800; font-size: 18px; line-height: 1; }
+.spw-score .n.neg { color: var(--ink-dim); }
+
+.spw-status {
+  display: inline-block; font-size: 11.5px; font-weight: 800;
+  border-radius: 999px; padding: 2px 9px; margin-top: 4px;
+  background: var(--water); color: var(--ink-dim);
+}
+.spw-status.salty, .spw-status.brine { background: var(--brine); color: #fff; }
+.spw-status.brine { box-shadow: 0 0 0 3px #FFD9D5; }
+.spw-status.chlorinated { background: var(--tile); color: var(--pool-deep); }
+.spw-status.drained { background: var(--pool-deep); color: var(--water); }
+
+.spw-tier {
+  display: inline-block; font-size: 11.5px; font-weight: 800;
+  border: 2px solid var(--pool-deep); border-radius: 999px;
+  padding: 1px 9px; margin-left: 6px; color: var(--pool-deep);
+}
+.spw-tier.bellyflop { border-style: dashed; color: var(--ink-dim); border-color: var(--ink-dim); }
+
+.spw-meta .counts { color: var(--ink-dim); }

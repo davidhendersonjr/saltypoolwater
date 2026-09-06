@@ -7,9 +7,13 @@ const useCosmos = !!(process.env.COSMOS_ENDPOINT && process.env.COSMOS_KEY);
 
 // ---------- helpers ----------
 
-/** UTC day bucket, e.g. "2026-07-12". Used as partition key and for the daily ration. */
-function today() {
-  return new Date().toISOString().slice(0, 10);
+const SITE_TZ = process.env.SITE_TZ || "America/Chicago";
+
+/** Day bucket in the site's timezone, e.g. "2026-09-05". Partition key + daily ration. */
+function today(date = new Date()) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: SITE_TZ, year: "numeric", month: "2-digit", day: "2-digit",
+  }).format(date);
 }
 
 /** Read the user identity SWA injects. Returns { userId, userDetails } or null. */
