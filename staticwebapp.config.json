@@ -3,7 +3,8 @@
     "rewrite": "/index.html",
     "exclude": ["/api/*", "/s/*", "/*.{png,svg,ico,css,js,ttf}"]
   },
-  "routes": [
+    "routes": [
+    { "route": "/p/*", "rewrite": "/index.html" },
     { "route": "/s/*", "rewrite": "/api/share" },
     { "route": "/api/*", "allowedRoles": ["anonymous", "authenticated"] }
   ],
