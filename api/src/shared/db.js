@@ -52,21 +52,18 @@ const mem = { complaints: [], votes: [] };
 
 // ---------- public API ----------
 
-async function listComplaints(day) {
+async function listComplaints({ limit = 100 } = {}) {
   if (useCosmos) {
     const { complaints } = await getContainers();
     const { resources } = await complaints.items
       .query({
-        query: "SELECT * FROM c WHERE c.day = @day ORDER BY c.ts DESC",
-        parameters: [{ name: "@day", value: day || today() }],
+        query: "SELECT TOP @limit * FROM c ORDER BY c.ts DESC",
+        parameters: [{ name: "@limit", value: limit }],
       })
       .fetchAll();
     return resources;
   }
-  const d = day || today();
-  return mem.complaints
-    .filter((c) => c.day === d)
-    .sort((a, b) => b.ts - a.ts);
+  return [...mem.complaints].sort((a, b) => b.ts - a.ts).slice(0, limit);
 }
 
 async function userPostedToday(userId) {
