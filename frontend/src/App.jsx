@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { api } from "./api.js";
 import { SaltShaker, WaterDrop } from "./VoteIcons.jsx";
+import Sidebar from "./Sidebar.jsx";
 import {
   VIEWS, applyView, formatScore, netScore, statusFor, tiersFor, msUntilMidnight,
 } from "./scoring.js";
-   import Sidebar from "./Sidebar.jsx";
 
 const MAX_SETUP = 200;
 const MAX_PUNCHLINE = 140;
@@ -42,12 +42,32 @@ export default function App() {
   // Which way you voted on each complaint this session (the API doesn't return this yet).
   const [myVotes, setMyVotes] = useState({});
   const countdown = useCountdown();
+  const [copied, setCopied] = useState(null);
+
+  // /p/<id> shows one post; anything else shows the feed.
+  const singleId = (window.location.pathname.match(/^\/p\/([^/]+)/) || [])[1] || null;
+
+  async function share(c) {
+    const url = `${window.location.origin}/s/${c.id}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: c.setup, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        setCopied(c.id);
+        setTimeout(() => setCopied(null), 1800);
+      }
+    } catch {
+      /* user cancelled the share sheet */
+    }
+  }
 
   async function refresh() {
     try {
       const [meRes, feed] = await Promise.all([api.me(), api.listComplaints()]);
       setMe(meRes);
       setComplaints(feed.complaints);
+      setMyVotes(feed.myVotes || {});
     } catch (e) {
       setError("Couldn't reach the pool. Refresh to try again.");
     } finally {
@@ -59,7 +79,16 @@ export default function App() {
     refresh();
   }, []);
 
-  const shown = useMemo(() => applyView(complaints, view), [complaints, view]);
+  const shown = useMemo(() => {
+    if (singleId) return complaints.filter((c) => c.id === singleId);
+    return applyView(complaints, view);
+  }, [complaints, view, singleId]);
+
+  useEffect(() => {
+    const one = singleId && complaints.find((c) => c.id === singleId);
+    document.title = one ? `${one.setup} — saltypoolwater` : "saltypoolwater — the shallow end of the internet";
+  }, [singleId, complaints]);
+
 
   async function submit() {
     setError("");
@@ -102,46 +131,45 @@ export default function App() {
   const signedIn = me?.signedIn;
   const posted = me?.postedToday;
 
-  const emptyText =
-    view === "today"
+  const emptyText = singleId
+    ? "That one drifted off. It may have been removed."
+    : view === "today"
       ? "Nobody's complained yet today. The pool is suspiciously calm. Be the first."
       : "The pool is empty. Someone go complain.";
 
   return (
-       <div className="spw-shell">
-     <div className="spw-layout">
-     <main className="spw-main">
-            <header className="spw-header">
-        <div className="spw-header-text">
-          <h1 className="spw-wordmark">
-            <span className="spw-salty">salty</span>poolwater
-          </h1>
-          <p className="spw-tag">The shallow end of the internet.</p>
+    <div className="spw-shell">
+      <div className="spw-layout">
+      <main className="spw-main">
+      <header className="spw-header">
+        <img className="spw-logo" src="/logo-icon.svg" alt="" width="72" height="72" />
+        <h1 className="spw-wordmark">
+          <span className="spw-salty">salty</span>poolwater
+        </h1>
+        <p className="spw-tag">One complaint a day. Make it funny.</p>
 
-          <div className="spw-authrow">
-            {signedIn ? (
-              <>
-               <span className="spw-who"><SaltShaker filled size={16} /> {me.userDetails}</span>
-                <a className="spw-linkbtn" href={logoutUrl}>Sign out</a>
-              </>
-            ) : (
-              <>
-                <a className="spw-btn spw-btn-small" href={loginGitHub}>Sign in with GitHub</a>
-                <a className="spw-btn spw-btn-small" href={loginMicrosoft}>Sign in with Microsoft</a>
-              </>
-            )}
-          </div>
-
-          {signedIn && (
-            <div className="spw-ration" role="status">
-              <span className={`dot ${posted ? "dot-used" : "dot-ok"}`} aria-hidden="true"></span>
-              {posted
-                ? `Set performed · next mic at midnight (${countdown})`
-                : "1 complaint left today"}
-            </div>
+        <div className="spw-authrow">
+          {signedIn ? (
+            <>
+              <span className="spw-who">🧂 {me.userDetails}</span>
+              <a className="spw-linkbtn" href={logoutUrl}>Sign out</a>
+            </>
+          ) : (
+            <>
+              <a className="spw-btn spw-btn-small" href={loginGitHub}>Sign in with GitHub</a>
+              <a className="spw-btn spw-btn-small" href={loginMicrosoft}>Sign in with Microsoft</a>
+            </>
           )}
         </div>
-        <img className="spw-logo" src="/logo-icon.svg" alt="" />
+
+        {signedIn && (
+          <div className="spw-ration" role="status">
+            <span className={`dot ${posted ? "dot-used" : "dot-ok"}`} aria-hidden="true"></span>
+            {posted
+              ? `Set performed · next mic at midnight (${countdown})`
+              : "1 complaint left today"}
+          </div>
+        )}
       </header>
 
       {error && <div className="spw-error" role="alert">{error}</div>}
@@ -196,6 +224,9 @@ export default function App() {
         </section>
       )}
 
+      {singleId ? (
+        <p className="spw-back"><a href="/">← Back to the pool</a></p>
+      ) : (
       <div className="spw-tabs" role="tablist" aria-label="Sort complaints">
         {VIEWS.map((v) => (
           <button
@@ -209,6 +240,7 @@ export default function App() {
           </button>
         ))}
       </div>
+      )}
 
       {loading && <p className="spw-empty">Checking the water…</p>}
       {!loading && shown.length === 0 && <p className="spw-empty">{emptyText}</p>}
@@ -245,7 +277,7 @@ export default function App() {
               </div>
               <div className="spw-body">
                 <p className="spw-setup">{c.setup}</p>
-                {revealed[c.id] ? (
+                {revealed[c.id] || c.id === singleId ? (
                   <p className="spw-punchline">{c.punchline}</p>
                 ) : (
                   <button
@@ -268,6 +300,10 @@ export default function App() {
                   <span className="counts" title={`${c.landed} salted, ${c.womp} watered down`}>
                     {c.landed} salted · {c.womp} watered down
                   </span>
+                  {" · "}
+                  <button className="spw-linkbtn spw-share" onClick={() => share(c)}>
+                    {copied === c.id ? "Link copied" : "Share"}
+                  </button>
                 </p>
 
                 <div className="spw-comments">
@@ -298,9 +334,10 @@ export default function App() {
           </article>
         );
       })}
-   </main>
-   <Sidebar />
-   </div>
+
+      </main>
+      <Sidebar />
+      </div>
 
       <footer className="spw-foot">
         saltypoolwater.com — keep it petty, keep it anonymous. No naming real people.
