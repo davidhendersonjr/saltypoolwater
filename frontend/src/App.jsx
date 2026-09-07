@@ -45,7 +45,7 @@ export default function App() {
   const [me, setMe] = useState(null);
   const [emblem, setEmblem] = useState(null);
   const [complaints, setComplaints] = useState([]);
-  const [view, setView] = useState("today");
+  const [view, setView] = useState("alltime");
   const [setup, setSetup] = useState("");
   const [punchline, setPunchline] = useState("");
   const [error, setError] = useState("");
@@ -438,3 +438,4 @@ export default function App() {
     </div>
   );
 }
+
