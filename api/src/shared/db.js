@@ -353,11 +353,11 @@ async function listUserActivity(author, { limit = 50 } = {}) {
       .query({
         query:
           "SELECT c.id AS complaintId, c.day, c.setup, m.text, m.ts " +
-          "FROM c JOIN m IN c.comments WHERE m.author = @a ORDER BY m.ts DESC",
+          "FROM c JOIN m IN c.comments WHERE m.author = @a",
         parameters: [{ name: "@a", value: author }],
       })
       .fetchAll();
-    comments = commentRes.resources.slice(0, limit);
+    comments = commentRes.resources.sort((a, b) => b.ts - a.ts).slice(0, limit);
   } else {
     posts = mem.complaints
       .filter((c) => c.author === author)
@@ -400,4 +400,5 @@ module.exports = {
   listProfiles,
   listUserActivity,
 };
+
 
