@@ -186,14 +186,11 @@ export default function App() {
 
   return (
     <div className="spw-shell">
-      {signedIn && (
-        <UserMenu me={me} emblem={emblem} onSaveEmblem={saveEmblem} logoutUrl={logoutUrl} />
-      )}
-
       <div className="spw-layout">
       <main className="spw-main">
-      {!singleId && (
-        <div className={`spw-topbar ${searchOpen || q ? "is-open" : ""}`}>
+      <div className={`spw-topbar ${searchOpen || q ? "is-open" : ""}`}>
+        {!singleId && (
+          <>
           <button
             className="spw-search-toggle"
             onClick={() => setSearchOpen((o) => !o)}
@@ -218,8 +215,12 @@ export default function App() {
               </button>
             )}
           </label>
-        </div>
-      )}
+          </>
+        )}
+        {signedIn && (
+          <UserMenu me={me} emblem={emblem} onSaveEmblem={saveEmblem} logoutUrl={logoutUrl} />
+        )}
+      </div>
             <header className="spw-header">
         <div className="spw-header-text">
           <h1 className="spw-wordmark">

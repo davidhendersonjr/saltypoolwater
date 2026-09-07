@@ -20,12 +20,9 @@
 
 /* ---------- account menu (top right of header) ---------- */
 
-.spw-shell { position: relative; }
-
 .spw-usermenu {
-  position: absolute;
-  top: -8px;
-  right: 12px;
+  position: relative;
+  margin-left: 28px;
   z-index: 20;
 }
 .spw-usermenu-btn {
@@ -246,7 +243,7 @@
 }
 
 @media (max-width: 480px) {
-  .spw-usermenu { top: 8px; right: 8px; }
+  .spw-usermenu { margin-left: auto; }
   .spw-picker { padding: 14px; }
   .spw-picker-grid { grid-template-columns: repeat(3, 1fr); }
 }
@@ -254,5 +251,3 @@
 @media (prefers-reduced-motion: reduce) {
   .spw-usermenu-btn, .spw-usermenu-btn:hover { transition: none; transform: none; }
 }
-
-
