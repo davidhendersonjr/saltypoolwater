@@ -21,28 +21,28 @@ resource "azurerm_cosmosdb_account" "spw-cosmosdb" {
     failover_priority = 0
   }
 }
-  resource "azurerm_cosmosdb_sql_database" "spw-db" {
-    name                = "saltypoolwater"
-    resource_group_name = azurerm_resource_group.spw-rg.name
-    account_name        = azurerm_cosmosdb_account.spw-cosmosdb.name
-    throughput          = 1000
-  }
+resource "azurerm_cosmosdb_sql_database" "spw-db" {
+  name                = "saltypoolwater"
+  resource_group_name = azurerm_resource_group.spw-rg.name
+  account_name        = azurerm_cosmosdb_account.spw-cosmosdb.name
+  throughput          = 1000
+}
 
-  resource "azurerm_cosmosdb_sql_container" "complaints" {
-    name                = "complaints"
-    resource_group_name = azurerm_resource_group.spw-rg.name
-    account_name        = azurerm_cosmosdb_account.spw-cosmosdb.name
-    database_name       = azurerm_cosmosdb_sql_database.spw-db.name
-    partition_key_paths = ["/day"]
-  }
+resource "azurerm_cosmosdb_sql_container" "complaints" {
+  name                = "complaints"
+  resource_group_name = azurerm_resource_group.spw-rg.name
+  account_name        = azurerm_cosmosdb_account.spw-cosmosdb.name
+  database_name       = azurerm_cosmosdb_sql_database.spw-db.name
+  partition_key_paths = ["/day"]
+}
 
-  resource "azurerm_cosmosdb_sql_container" "votes" {
-    name                = "votes"
-    resource_group_name = azurerm_resource_group.spw-rg.name
-    account_name        = azurerm_cosmosdb_account.spw-cosmosdb.name
-    database_name       = azurerm_cosmosdb_sql_database.spw-db.name
-    partition_key_paths = ["/complaintId"]
-  }
+resource "azurerm_cosmosdb_sql_container" "votes" {
+  name                = "votes"
+  resource_group_name = azurerm_resource_group.spw-rg.name
+  account_name        = azurerm_cosmosdb_account.spw-cosmosdb.name
+  database_name       = azurerm_cosmosdb_sql_database.spw-db.name
+  partition_key_paths = ["/complaintId"]
+}
 
 resource "azurerm_static_web_app" "spw-swa" {
   name                = "swa-saltypoolwater"
@@ -55,6 +55,10 @@ resource "azurerm_static_web_app" "spw-swa" {
     COSMOS_ENDPOINT = azurerm_cosmosdb_account.spw-cosmosdb.endpoint
     COSMOS_KEY      = azurerm_cosmosdb_account.spw-cosmosdb.primary_key
   }
+
+  lifecycle {
+    ignore_changes = [repository_url, repository_branch]
+  }
 }
 resource "azurerm_dns_zone" "spw" {
   name                = "saltypoolwater.com"
@@ -65,11 +69,17 @@ resource "azurerm_dns_txt_record" "ms_verify" {
   zone_name           = azurerm_dns_zone.spw.name
   resource_group_name = azurerm_resource_group.spw-rg.name
   ttl                 = 3600
+
   record {
     value = "MS=ms28032115"
-  } 
-  record {
-    value = azurerm_static_web_app_custom_domain.apex.validation_token
+  }
+
+  # Only present while the custom domain is being validated; Azure blanks it afterward.
+  dynamic "record" {
+    for_each = azurerm_static_web_app_custom_domain.apex.validation_token != "" ? [1] : []
+    content {
+      value = azurerm_static_web_app_custom_domain.apex.validation_token
+    }
   }
 }
 # www.saltypoolwater.com
@@ -101,4 +111,11 @@ resource "azurerm_dns_a_record" "apex" {
   resource_group_name = azurerm_resource_group.spw-rg.name
   ttl                 = 300
   target_resource_id  = azurerm_static_web_app.spw-swa.id
+}
+resource "azurerm_cosmosdb_sql_container" "profiles" {
+  name                = "profiles"
+  resource_group_name = azurerm_resource_group.spw-rg.name
+  account_name        = azurerm_cosmosdb_account.spw-cosmosdb.name
+  database_name       = azurerm_cosmosdb_sql_database.spw-db.name
+  partition_key_paths = ["/id"]
 }
