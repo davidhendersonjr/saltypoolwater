@@ -20,8 +20,10 @@
 
 /* ---------- account menu (top right of header) ---------- */
 
+.spw-shell { position: relative; }
+
 .spw-usermenu {
-  position: fixed;
+  position: absolute;
   top: 12px;
   right: 12px;
   z-index: 20;
@@ -252,3 +254,4 @@
 @media (prefers-reduced-motion: reduce) {
   .spw-usermenu-btn, .spw-usermenu-btn:hover { transition: none; transform: none; }
 }
+
