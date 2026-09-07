@@ -14,6 +14,18 @@ async function request(path, options = {}) {
   return body;
 }
 
+// Emblems save to the API when the endpoint exists and fall back to this
+// browser's storage until then, so the picker works before the backend does.
+const EMBLEM_KEY = "spw-emblem";
+
+function localEmblem() {
+  try {
+    return JSON.parse(localStorage.getItem(EMBLEM_KEY));
+  } catch {
+    return null;
+  }
+}
+
 export const api = {
   me: () => request("/api/me"),
   listComplaints: () => request("/api/complaints"),
@@ -32,6 +44,29 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ day, text }),
     }),
+
+  getEmblem: async () => {
+    try {
+      const body = await request("/api/me/emblem");
+      if (body.emblem) return body.emblem;
+    } catch {
+      /* endpoint not there yet, or nothing saved */
+    }
+    return localEmblem();
+  },
+  saveEmblem: async (emblem) => {
+    try {
+      const body = await request("/api/me/emblem", {
+        method: "PUT",
+        body: JSON.stringify({ emblem }),
+      });
+      return body.emblem || emblem;
+    } catch (e) {
+      if (e.status === 401) throw new Error("Sign in to save your shark.");
+      localStorage.setItem(EMBLEM_KEY, JSON.stringify(emblem));
+      return emblem;
+    }
+  },
 };
 
 export const loginUrl = "/.auth/login/github?post_login_redirect_uri=/";

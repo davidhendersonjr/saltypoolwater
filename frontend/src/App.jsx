@@ -2,6 +2,9 @@ import React, { useEffect, useMemo, useState } from "react";
 import { api } from "./api.js";
 import { SaltShaker, WaterDrop } from "./VoteIcons.jsx";
 import Sidebar from "./Sidebar.jsx";
+import Emblem from "./emblem/Emblem.jsx";
+import UserMenu from "./emblem/UserMenu.jsx";
+import { emblemFromName } from "./emblem/emblemParts.jsx";
 import {
   VIEWS, applyView, formatScore, netScore, statusFor, tiersFor, msUntilMidnight,
 } from "./scoring.js";
@@ -31,6 +34,7 @@ function slug(label) {
 
 export default function App() {
   const [me, setMe] = useState(null);
+  const [emblem, setEmblem] = useState(null);
   const [complaints, setComplaints] = useState([]);
   const [view, setView] = useState("today");
   const [setup, setSetup] = useState("");
@@ -48,7 +52,7 @@ export default function App() {
   const singleId = (window.location.pathname.match(/^\/p\/([^/]+)/) || [])[1] || null;
 
   async function share(c) {
-        const url = `${window.location.origin}/api/share/${c.id}`;
+    const url = `${window.location.origin}/api/share/${c.id}`;
     try {
       if (navigator.share) {
         await navigator.share({ title: c.setup, url });
@@ -68,6 +72,10 @@ export default function App() {
       setMe(meRes);
       setComplaints(feed.complaints);
       setMyVotes(feed.myVotes || {});
+      if (meRes?.signedIn) {
+        const saved = await api.getEmblem();
+        setEmblem(saved || emblemFromName(meRes.userDetails));
+      }
     } catch (e) {
       setError("Couldn't reach the pool. Refresh to try again.");
     } finally {
@@ -89,6 +97,18 @@ export default function App() {
     document.title = one ? `${one.setup} — saltypoolwater` : "saltypoolwater — the shallow end of the internet";
   }, [singleId, complaints]);
 
+  async function saveEmblem(next) {
+    const saved = await api.saveEmblem(next);
+    setEmblem(saved);
+  }
+
+  // The emblem to show next to an author: what the API stored on the post,
+  // your own current one if it's you, otherwise a stable one from the name.
+  function emblemFor(author, stored) {
+    if (stored) return stored;
+    if (signedIn && author === me.userDetails && emblem) return emblem;
+    return emblemFromName(author);
+  }
 
   async function submit() {
     setError("");
@@ -139,6 +159,10 @@ export default function App() {
 
   return (
     <div className="spw-shell">
+      {signedIn && (
+        <UserMenu me={me} emblem={emblem} onSaveEmblem={saveEmblem} logoutUrl={logoutUrl} />
+      )}
+
       <div className="spw-layout">
       <main className="spw-main">
             <header className="spw-header">
@@ -150,10 +174,7 @@ export default function App() {
 
           <div className="spw-authrow">
             {signedIn ? (
-              <>
-                <span className="spw-who"><SaltShaker filled size={16} /> {me.userDetails}</span>
-                <a className="spw-linkbtn" href={logoutUrl}>Sign out</a>
-              </>
+              <span className="spw-who"><SaltShaker filled size={16} /> {me.userDetails}</span>
             ) : (
               <>
                 <a className="spw-btn spw-btn-small" href={loginGitHub}>Sign in with GitHub</a>
@@ -297,7 +318,12 @@ export default function App() {
                   ))}
                 </p>
                 <p className="spw-meta">
-                  {c.author} · {new Date(c.ts).toLocaleDateString([], { month: "short", day: "numeric" })}
+                  <span className="spw-author">
+                    <Emblem emblem={emblemFor(c.author, c.authorEmblem)} size={18} title={c.author} />
+                    {c.author}
+                  </span>
+                  {" · "}
+                  {new Date(c.ts).toLocaleDateString([], { month: "short", day: "numeric" })}
                   {" · "}
                   <span className="counts" title={`${c.landed} salted, ${c.womp} watered down`}>
                     {c.landed} salted · {c.womp} watered down
@@ -311,7 +337,10 @@ export default function App() {
                 <div className="spw-comments">
                   {c.comments.map((m) => (
                     <p className="spw-comment" key={m.id}>
-                      <span className="who">{m.author}</span>
+                      <span className="who spw-author">
+                        <Emblem emblem={emblemFor(m.author, m.authorEmblem)} size={16} title={m.author} />
+                        {m.author}
+                      </span>
                       {m.text}
                     </p>
                   ))}

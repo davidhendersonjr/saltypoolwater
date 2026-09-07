@@ -1,3 +1,4 @@
+@import "./emblem/emblem.css";
 /* saltypoolwater — pool-deck design system
    Carried over from prototype v2: aqua water, deep-navy ink, coral accent,
    tile-blue borders, dashed "lane line" dividers. */
@@ -171,3 +172,4 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .spw-btn, .spw-btn:hover { transition: none; transform: none; }
 }
+

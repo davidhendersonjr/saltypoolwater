@@ -1,0 +1,254 @@
+/* saltypoolwater — user emblems, picker, and the top-right account menu.
+   Uses the site's existing variables; fallbacks match the current palette. */
+
+.spw-emblem {
+  display: inline-block;
+  vertical-align: middle;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--pool-deep, #0E3A5C);
+  background: var(--water, #DFF3F7);
+  flex: none;
+}
+
+/* Small emblem next to an author name on a post or comment */
+.spw-author {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.spw-author .spw-emblem { box-shadow: 0 0 0 1.5px var(--pool-deep, #0E3A5C); }
+
+/* ---------- account menu (top right of header) ---------- */
+
+.spw-usermenu {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 20;
+}
+.spw-usermenu-btn {
+  border: 0;
+  padding: 3px;
+  background: transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  line-height: 0;
+  transition: transform 120ms ease;
+}
+.spw-usermenu-btn:hover { transform: translateY(-1px); }
+.spw-usermenu-btn:focus-visible {
+  outline: 3px solid var(--brine, #FF5C4D);
+  outline-offset: 2px;
+}
+.spw-usermenu-btn .spw-emblem { box-shadow: 0 0 0 3px var(--pool-deep, #0E3A5C); }
+
+.spw-usermenu-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  min-width: 220px;
+  background: #fff;
+  border: 2px solid var(--pool-deep, #0E3A5C);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(14, 58, 92, 0.18);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+}
+.spw-usermenu-who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px 10px;
+  border-bottom: 2px solid var(--tile, #8FD0DE);
+  margin-bottom: 4px;
+}
+.spw-usermenu-who strong {
+  display: block;
+  color: var(--pool-deep, #0E3A5C);
+  font-size: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 150px;
+}
+.spw-usermenu-who span { font-size: 12px; color: var(--ink-dim, #5C7A8E); }
+
+.spw-usermenu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--pool-deep, #0E3A5C);
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  padding: 9px 10px;
+  cursor: pointer;
+  text-decoration: none;
+}
+.spw-usermenu-item:hover,
+.spw-usermenu-item:focus-visible { background: var(--water, #DFF3F7); outline: none; }
+.spw-usermenu-out { color: #9E2B20; }
+
+/* ---------- picker dialog ---------- */
+
+.spw-picker-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(14, 58, 92, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.spw-picker {
+  width: min(560px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  background: #fff;
+  border: 2px solid var(--pool-deep, #0E3A5C);
+  border-radius: 16px;
+  box-shadow: 0 16px 40px rgba(14, 58, 92, 0.3);
+  padding: 16px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.spw-picker-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.spw-picker-head h2 {
+  margin: 0;
+  font-size: 22px;
+  color: var(--pool-deep, #0E3A5C);
+}
+.spw-picker-x {
+  font: inherit;
+  font-size: 22px;
+  line-height: 1;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid var(--tile, #8FD0DE);
+  background: transparent;
+  color: var(--pool-deep, #0E3A5C);
+  cursor: pointer;
+}
+.spw-picker-x:hover { background: var(--water, #DFF3F7); }
+
+.spw-picker-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  background: var(--water, #DFF3F7);
+  border-radius: 12px;
+}
+.spw-picker-stage .spw-emblem { box-shadow: 0 0 0 4px var(--pool-deep, #0E3A5C); }
+.spw-picker-stage-btns { display: flex; gap: 14px; }
+
+.spw-picker-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.spw-picker-tab {
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 2px solid var(--tile, #8FD0DE);
+  background: transparent;
+  color: var(--pool-deep, #0E3A5C);
+  cursor: pointer;
+}
+.spw-picker-tab[aria-selected="true"] {
+  background: var(--pool-deep, #0E3A5C);
+  border-color: var(--pool-deep, #0E3A5C);
+  color: var(--water, #DFF3F7);
+}
+
+.spw-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: 8px;
+}
+.spw-picker-swatch {
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--pool-deep, #0E3A5C);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 6px 8px;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  background: transparent;
+  cursor: pointer;
+}
+.spw-picker-swatch:hover { background: var(--water, #DFF3F7); }
+.spw-picker-swatch.is-on {
+  border-color: var(--brine, #FF5C4D);
+  background: #FFF1EF;
+}
+.spw-picker-swatch:focus-visible {
+  outline: 3px solid var(--brine, #FF5C4D);
+  outline-offset: 1px;
+}
+.spw-picker-swatch .spw-emblem { box-shadow: 0 0 0 2px var(--pool-deep, #0E3A5C); }
+.spw-picker-swatch span {
+  text-align: center;
+  line-height: 1.15;
+}
+
+.spw-picker-foot {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 14px;
+  padding-top: 4px;
+}
+
+/* ---------- profile dialog ---------- */
+
+.spw-profile { width: min(380px, 100%); }
+.spw-profile-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+.spw-profile-body .spw-emblem { box-shadow: 0 0 0 4px var(--pool-deep, #0E3A5C); }
+.spw-profile-name {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--pool-deep, #0E3A5C);
+}
+.spw-profile-note {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--ink-dim, #5C7A8E);
+  max-width: 28ch;
+}
+
+@media (max-width: 480px) {
+  .spw-usermenu { top: 8px; right: 8px; }
+  .spw-picker { padding: 14px; }
+  .spw-picker-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spw-usermenu-btn, .spw-usermenu-btn:hover { transition: none; transform: none; }
+}
