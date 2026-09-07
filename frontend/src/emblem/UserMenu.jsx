@@ -13,10 +13,9 @@ import EmblemPicker from "./EmblemPicker.jsx";
   Sits in the top-right corner of the header. Clicking the little shark
   opens the menu; "Customize my shark" opens the picker.
 */
-export default function UserMenu({ me, emblem, onSaveEmblem, logoutUrl }) {
+export default function UserMenu({ me, emblem, onSaveEmblem, onOpenProfile, logoutUrl }) {
   const [open, setOpen] = useState(false);
   const [picking, setPicking] = useState(false);
-  const [showProfile, setShowProfile] = useState(false);
   const wrap = useRef(null);
 
   useEffect(() => {
@@ -62,7 +61,7 @@ export default function UserMenu({ me, emblem, onSaveEmblem, logoutUrl }) {
           <button role="menuitem" className="spw-usermenu-item" onClick={() => { setOpen(false); setPicking(true); }}>
             Customize my shark
           </button>
-          <button role="menuitem" className="spw-usermenu-item" onClick={() => { setOpen(false); setShowProfile(true); }}>
+          <button role="menuitem" className="spw-usermenu-item" onClick={() => { setOpen(false); onOpenProfile?.(); }}>
             Profile
           </button>
           <a role="menuitem" className="spw-usermenu-item spw-usermenu-out" href={logoutUrl}>
@@ -75,26 +74,6 @@ export default function UserMenu({ me, emblem, onSaveEmblem, logoutUrl }) {
         <EmblemPicker value={emblem} onSave={onSaveEmblem} onClose={() => setPicking(false)} />
       )}
 
-      {showProfile && (
-        <div className="spw-picker-backdrop" onMouseDown={(e) => e.target === e.currentTarget && setShowProfile(false)}>
-          <section className="spw-picker spw-profile" role="dialog" aria-modal="true" aria-label="Profile">
-            <div className="spw-picker-head">
-              <h2>Profile</h2>
-              <button className="spw-picker-x" onClick={() => setShowProfile(false)} aria-label="Close">×</button>
-            </div>
-            <div className="spw-profile-body">
-              <Emblem emblem={emblem} size={96} />
-              <p className="spw-profile-name">{name}</p>
-              <p className="spw-profile-note">
-                Your name comes from the account you signed in with. Stats and history land here next.
-              </p>
-              <button className="spw-btn spw-btn-small" onClick={() => { setShowProfile(false); setPicking(true); }}>
-                Customize my shark
-              </button>
-            </div>
-          </section>
-        </div>
-      )}
     </div>
   );
 }

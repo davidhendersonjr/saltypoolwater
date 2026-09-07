@@ -46,13 +46,14 @@ async function getContainers() {
   containers = {
     complaints: db.container("complaints"),
     votes: db.container("votes"),
+    profiles: db.container("profiles"),
   };
   return containers;
 }
 
 // ---------- in-memory fallback (local dev) ----------
 
-const mem = { complaints: [], votes: [] };
+const mem = { complaints: [], votes: [], profiles: [] };
 
 // ---------- public API ----------
 
@@ -224,6 +225,164 @@ async function listUserVotes(userId) {
   }
   return out;
 }
+// ============================================================
+// PROFILES — paste this block into api/src/shared/db.js,
+// just above the final `module.exports = {` line.
+// ============================================================
+
+const MAX_HEADLINE = 80;
+const MAX_BIO = 280;
+
+/** Trim and cap a free-text field. */
+function clean(value, max) {
+  return String(value ?? "").replace(/\s+/g, " ").trim().slice(0, max);
+}
+
+/** Only keep the five emblem slots, each a short id. Anything else is dropped. */
+function cleanEmblem(e) {
+  if (!e || typeof e !== "object") return null;
+  const out = {};
+  for (const key of ["fin", "color", "floatie", "water", "extra"]) {
+    const v = e[key];
+    if (typeof v === "string" && v.length <= 32) out[key] = v;
+  }
+  return Object.keys(out).length ? out : null;
+}
+
+/** One user's profile by their auth id. */
+async function getProfile(userId) {
+  if (useCosmos) {
+    const { profiles } = await getContainers();
+    try {
+      const { resource } = await profiles.item(userId, userId).read();
+      return resource || null;
+    } catch {
+      return null;
+    }
+  }
+  return mem.profiles.find((p) => p.id === userId) || null;
+}
+
+/** One user's profile by their display name (what the feed shows). */
+async function getProfileByAuthor(author) {
+  if (useCosmos) {
+    const { profiles } = await getContainers();
+    const { resources } = await profiles.items
+      .query({
+        query: "SELECT * FROM c WHERE c.author = @a",
+        parameters: [{ name: "@a", value: author }],
+      })
+      .fetchAll();
+    return resources[0] || null;
+  }
+  return mem.profiles.find((p) => p.author === author) || null;
+}
+
+/** Create or update the signed-in user's own profile. Only the given fields change. */
+async function saveProfile({ userId, author, headline, bio, emblem }) {
+  const existing = (await getProfile(userId)) || {
+    id: userId,
+    author,
+    headline: "",
+    bio: "",
+    emblem: null,
+    joined: Date.now(),
+  };
+
+  const doc = {
+    ...existing,
+    author, // keep in step with the auth provider
+    ...(headline !== undefined ? { headline: clean(headline, MAX_HEADLINE) } : {}),
+    ...(bio !== undefined ? { bio: clean(bio, MAX_BIO) } : {}),
+    ...(emblem !== undefined ? { emblem: cleanEmblem(emblem) } : {}),
+    updated: Date.now(),
+  };
+
+  if (useCosmos) {
+    const { profiles } = await getContainers();
+    await profiles.items.upsert(doc);
+  } else {
+    mem.profiles = mem.profiles.filter((p) => p.id !== userId);
+    mem.profiles.push(doc);
+  }
+  return doc;
+}
+
+/**
+ * Every profile as { author: { emblem, headline } }.
+ * The feed loads this once so each post can show its author's current shark —
+ * change your shark and every post you've made updates with it.
+ */
+async function listProfiles() {
+  const out = {};
+  let rows;
+  if (useCosmos) {
+    const { profiles } = await getContainers();
+    const { resources } = await profiles.items
+      .query("SELECT c.author, c.emblem, c.headline FROM c")
+      .fetchAll();
+    rows = resources;
+  } else {
+    rows = mem.profiles;
+  }
+  for (const p of rows) {
+    if (p.author) out[p.author] = { emblem: p.emblem || null, headline: p.headline || "" };
+  }
+  return out;
+}
+
+/** One user's complaints and comments, newest first. */
+async function listUserActivity(author, { limit = 50 } = {}) {
+  let posts = [];
+  let comments = [];
+
+  if (useCosmos) {
+    const { complaints } = await getContainers();
+    const postRes = await complaints.items
+      .query({
+        query: "SELECT TOP @limit * FROM c WHERE c.author = @a ORDER BY c.ts DESC",
+        parameters: [
+          { name: "@limit", value: limit },
+          { name: "@a", value: author },
+        ],
+      })
+      .fetchAll();
+    posts = postRes.resources;
+
+    const commentRes = await complaints.items
+      .query({
+        query:
+          "SELECT c.id AS complaintId, c.day, c.setup, m.text, m.ts " +
+          "FROM c JOIN m IN c.comments WHERE m.author = @a ORDER BY m.ts DESC",
+        parameters: [{ name: "@a", value: author }],
+      })
+      .fetchAll();
+    comments = commentRes.resources.slice(0, limit);
+  } else {
+    posts = mem.complaints
+      .filter((c) => c.author === author)
+      .sort((a, b) => b.ts - a.ts)
+      .slice(0, limit);
+    for (const c of mem.complaints) {
+      for (const m of c.comments || []) {
+        if (m.author === author) {
+          comments.push({ complaintId: c.id, day: c.day, setup: c.setup, text: m.text, ts: m.ts });
+        }
+      }
+    }
+    comments.sort((a, b) => b.ts - a.ts);
+    comments = comments.slice(0, limit);
+  }
+
+  // Strip the internal id before this leaves the server.
+  posts = posts.map(({ userId, ...rest }) => rest);
+
+  const salted = posts.reduce((n, p) => n + (p.landed || 0), 0);
+  const watered = posts.reduce((n, p) => n + (p.womp || 0), 0);
+
+  return { posts, comments, stats: { posts: posts.length, comments: comments.length, salted, watered } };
+}
+
 module.exports = {
   today,
   getPrincipal,
@@ -235,4 +394,10 @@ module.exports = {
   useCosmos,
   findComplaint,
   listUserVotes,
+  getProfile,
+  getProfileByAuthor,
+  saveProfile,
+  listProfiles,
+  listUserActivity,
 };
+

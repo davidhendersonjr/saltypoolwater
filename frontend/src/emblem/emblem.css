@@ -251,3 +251,103 @@
 @media (prefers-reduced-motion: reduce) {
   .spw-usermenu-btn, .spw-usermenu-btn:hover { transition: none; transform: none; }
 }
+
+/* ---------- clickable author names + profile panel ---------- */
+
+.spw-authorlink {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 999px;
+}
+.spw-authorlink:hover { text-decoration: underline; }
+.spw-authorlink:focus-visible {
+  outline: 2px solid var(--brine, #FF5C4D);
+  outline-offset: 2px;
+}
+
+.spw-profile { width: min(460px, 100%); }
+
+.spw-profile-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  padding: 6px 0 2px;
+}
+.spw-profile-top .spw-emblem { box-shadow: 0 0 0 4px var(--pool-deep, #0E3A5C); }
+
+.spw-profile-name {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--pool-deep, #0E3A5C);
+  overflow-wrap: anywhere;
+}
+.spw-profile-headline {
+  margin: 0;
+  font-size: 15px;
+  color: var(--pool-deep, #0E3A5C);
+  max-width: 34ch;
+}
+.spw-profile-bio {
+  margin: 0 0 10px;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--pool-deep, #0E3A5C);
+}
+.spw-profile-note {
+  margin: 0 0 10px;
+  font-size: 13.5px;
+  color: var(--ink-dim, #5C7A8E);
+}
+.spw-profile-joined {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-dim, #5C7A8E);
+}
+.spw-profile-stats {
+  margin: 0 0 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink-dim, #5C7A8E);
+}
+
+.spw-profile-about .spw-cinput,
+.spw-profile-about .spw-textarea { width: 100%; }
+.spw-profile-about .spw-label { margin-top: 10px; }
+
+.spw-profile-activity { display: flex; flex-direction: column; gap: 2px; }
+
+.spw-activity-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: var(--pool-deep, #0E3A5C);
+}
+.spw-activity-row:hover { background: var(--water, #DFF3F7); }
+.spw-activity-score {
+  flex: none;
+  min-width: 26px;
+  text-align: right;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--brine, #FF5C4D);
+}
+.spw-activity-text {
+  font-size: 14.5px;
+  line-height: 1.4;
+}
+.spw-activity-when {
+  display: block;
+  font-size: 12.5px;
+  color: var(--ink-dim, #5C7A8E);
+  margin-top: 2px;
+}

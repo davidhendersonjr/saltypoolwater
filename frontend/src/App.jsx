@@ -4,6 +4,7 @@ import { SaltShaker, WaterDrop } from "./VoteIcons.jsx";
 import Sidebar from "./Sidebar.jsx";
 import Emblem from "./emblem/Emblem.jsx";
 import UserMenu from "./emblem/UserMenu.jsx";
+import ProfilePanel from "./emblem/ProfilePanel.jsx";
 import { emblemFromName } from "./emblem/emblemParts.jsx";
 import {
   VIEWS, applyView, formatScore, netScore, statusFor, tiersFor, msUntilMidnight,
@@ -45,7 +46,7 @@ export default function App() {
   const [me, setMe] = useState(null);
   const [emblem, setEmblem] = useState(null);
   const [complaints, setComplaints] = useState([]);
-  const [view, setView] = useState("alltime");
+  const [view, setView] = useState("today");
   const [setup, setSetup] = useState("");
   const [punchline, setPunchline] = useState("");
   const [error, setError] = useState("");
@@ -58,6 +59,10 @@ export default function App() {
   const [copied, setCopied] = useState(null);
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+  // Everyone's emblem + headline, keyed by author name.
+  const [profiles, setProfiles] = useState({});
+  // Whose profile panel is open, if any.
+  const [openProfile, setOpenProfile] = useState(null);
 
   // /p/<id> shows one post; anything else shows the feed.
   const singleId = (window.location.pathname.match(/^\/p\/([^/]+)/) || [])[1] || null;
@@ -79,10 +84,15 @@ export default function App() {
 
   async function refresh() {
     try {
-      const [meRes, feed] = await Promise.all([api.me(), api.listComplaints()]);
+      const [meRes, feed, dir] = await Promise.all([
+        api.me(),
+        api.listComplaints(),
+        api.listProfiles(),
+      ]);
       setMe(meRes);
       setComplaints(feed.complaints);
       setMyVotes(feed.myVotes || {});
+      setProfiles(dir);
       if (meRes?.signedIn) {
         const saved = await api.getEmblem();
         setEmblem(saved || emblemFromName(meRes.userDetails));
@@ -125,14 +135,16 @@ export default function App() {
   async function saveEmblem(next) {
     const saved = await api.saveEmblem(next);
     setEmblem(saved);
+    if (me?.userDetails) {
+      setProfiles((p) => ({ ...p, [me.userDetails]: { ...p[me.userDetails], emblem: saved } }));
+    }
   }
 
   // The emblem to show next to an author: what the API stored on the post,
   // your own current one if it's you, otherwise a stable one from the name.
-  function emblemFor(author, stored) {
-    if (stored) return stored;
+  function emblemFor(author) {
     if (signedIn && author === me.userDetails && emblem) return emblem;
-    return emblemFromName(author);
+    return profiles[author]?.emblem || emblemFromName(author);
   }
 
   async function submit() {
@@ -218,7 +230,13 @@ export default function App() {
           </>
         )}
         {signedIn && (
-          <UserMenu me={me} emblem={emblem} onSaveEmblem={saveEmblem} logoutUrl={logoutUrl} />
+          <UserMenu
+            me={me}
+            emblem={emblem}
+            onSaveEmblem={saveEmblem}
+            onOpenProfile={() => setOpenProfile(me.userDetails)}
+            logoutUrl={logoutUrl}
+          />
         )}
       </div>
             <header className="spw-header">
@@ -380,10 +398,14 @@ export default function App() {
                   ))}
                 </p>
                 <p className="spw-meta">
-                  <span className="spw-author">
-                    <Emblem emblem={emblemFor(c.author, c.authorEmblem)} size={18} title={c.author} />
+                  <button
+                    className="spw-author spw-authorlink"
+                    onClick={() => setOpenProfile(c.author)}
+                    title={profiles[c.author]?.headline || `See ${c.author}'s profile`}
+                  >
+                    <Emblem emblem={emblemFor(c.author)} size={18} title={c.author} />
                     {c.author}
-                  </span>
+                  </button>
                   {" · "}
                   {new Date(c.ts).toLocaleDateString([], { month: "short", day: "numeric" })}
                   {" · "}
@@ -399,10 +421,14 @@ export default function App() {
                 <div className="spw-comments">
                   {c.comments.map((m) => (
                     <p className="spw-comment" key={m.id}>
-                      <span className="who spw-author">
-                        <Emblem emblem={emblemFor(m.author, m.authorEmblem)} size={16} title={m.author} />
+                      <button
+                        className="who spw-author spw-authorlink"
+                        onClick={() => setOpenProfile(m.author)}
+                        title={profiles[m.author]?.headline || `See ${m.author}'s profile`}
+                      >
+                        <Emblem emblem={emblemFor(m.author)} size={16} title={m.author} />
                         {m.author}
-                      </span>
+                      </button>
                       {m.text}
                     </p>
                   ))}
@@ -432,10 +458,21 @@ export default function App() {
       <Sidebar />
       </div>
 
+      {openProfile && (
+        <ProfilePanel
+          name={openProfile}
+          isMe={signedIn && openProfile === me.userDetails}
+          myEmblem={emblem}
+          onSaved={(saved) =>
+            setProfiles((p) => ({ ...p, [openProfile]: { ...p[openProfile], headline: saved?.headline || "" } }))
+          }
+          onClose={() => setOpenProfile(null)}
+        />
+      )}
+
       <footer className="spw-foot">
         saltypoolwater.com — keep it petty, keep it anonymous. No naming real people.
       </footer>
     </div>
   );
 }
-

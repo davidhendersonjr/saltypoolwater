@@ -14,16 +14,22 @@ async function request(path, options = {}) {
   return body;
 }
 
-// Emblems save to the API when the endpoint exists and fall back to this
-// browser's storage until then, so the picker works before the backend does.
-const EMBLEM_KEY = "spw-emblem";
+// Until the profile API is deployed, your own emblem and text live in this
+// browser so the picker still works. Other people's still come from the API.
+const LOCAL_KEY = "spw-profile";
 
-function localEmblem() {
+function localProfile() {
   try {
-    return JSON.parse(localStorage.getItem(EMBLEM_KEY));
+    return JSON.parse(localStorage.getItem(LOCAL_KEY)) || {};
   } catch {
-    return null;
+    return {};
   }
+}
+
+function saveLocalProfile(patch) {
+  const next = { ...localProfile(), ...patch };
+  localStorage.setItem(LOCAL_KEY, JSON.stringify(next));
+  return next;
 }
 
 export const api = {
@@ -45,27 +51,58 @@ export const api = {
       body: JSON.stringify({ day, text }),
     }),
 
+  // --- profiles ---
+
+  /** Everyone's emblem and headline, keyed by author name. Loaded once with the feed. */
+  listProfiles: async () => {
+    try {
+      const body = await request("/api/profiles");
+      return body.profiles || {};
+    } catch {
+      return {};
+    }
+  },
+
+  /** One person's public profile. Falls back to local storage for your own. */
+  getProfile: async (name) => {
+    try {
+      const body = await request(`/api/users/${encodeURIComponent(name)}`);
+      if (body.profile) return body.profile;
+    } catch {
+      /* API not deployed yet */
+    }
+    return { author: name, ...localProfile() };
+  },
+
+  getActivity: (name) => request(`/api/users/${encodeURIComponent(name)}/activity`),
+
+  /** Save any of headline, bio, emblem. Omitted fields are left alone. */
+  saveProfile: async (patch) => {
+    try {
+      const body = await request("/api/me/profile", {
+        method: "PUT",
+        body: JSON.stringify(patch),
+      });
+      return body.profile;
+    } catch (e) {
+      if (e.status === 401) throw new Error("Sign in to save your profile.");
+      return saveLocalProfile(patch);
+    }
+  },
+
   getEmblem: async () => {
     try {
       const body = await request("/api/me/emblem");
       if (body.emblem) return body.emblem;
     } catch {
-      /* endpoint not there yet, or nothing saved */
+      /* fall through */
     }
-    return localEmblem();
+    return localProfile().emblem || null;
   },
+
   saveEmblem: async (emblem) => {
-    try {
-      const body = await request("/api/me/emblem", {
-        method: "PUT",
-        body: JSON.stringify({ emblem }),
-      });
-      return body.emblem || emblem;
-    } catch (e) {
-      if (e.status === 401) throw new Error("Sign in to save your shark.");
-      localStorage.setItem(EMBLEM_KEY, JSON.stringify(emblem));
-      return emblem;
-    }
+    const saved = await api.saveProfile({ emblem });
+    return saved?.emblem || emblem;
   },
 };
 
