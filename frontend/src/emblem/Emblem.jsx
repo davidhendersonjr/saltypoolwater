@@ -53,6 +53,7 @@ export default function Emblem({ emblem, size = 40, title, className = "" }) {
         <path d={fin.d} fill="none" stroke="#fff" strokeOpacity="0.6" strokeWidth="4" strokeLinejoin="round" />
         <path d={fin.d} fill={color.base} />
         {color.overlay && <g clipPath={`url(#${finClip})`}>{color.overlay()}</g>}
+        {fin.detail && fin.detail()}
         <path d={fin.d} fill="none" stroke="#000" strokeOpacity="0.12" strokeWidth="1.5" />
 
         <g clipPath={`url(#${frontClip})`}>{floatie.front()}</g>
