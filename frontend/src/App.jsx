@@ -28,6 +28,15 @@ function useCountdown() {
   return `${h}h ${String(m).padStart(2, "0")}m ${String(s).padStart(2, "0")}s`;
 }
 
+function SearchIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+      <circle cx="6.5" cy="6.5" r="4.5" fill="none" stroke="currentColor" strokeWidth="2" />
+      <path d="M10 10 L14.5 14.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function slug(label) {
   return label.toLowerCase().replace(/\s+/g, "");
 }
@@ -47,6 +56,8 @@ export default function App() {
   const [myVotes, setMyVotes] = useState({});
   const countdown = useCountdown();
   const [copied, setCopied] = useState(null);
+  const [query, setQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
 
   // /p/<id> shows one post; anything else shows the feed.
   const singleId = (window.location.pathname.match(/^\/p\/([^/]+)/) || [])[1] || null;
@@ -87,10 +98,24 @@ export default function App() {
     refresh();
   }, []);
 
+  const q = query.trim().toLowerCase();
   const shown = useMemo(() => {
     if (singleId) return complaints.filter((c) => c.id === singleId);
+    if (q) {
+      // Search spans every day, not just the current tab.
+      return complaints
+        .filter((c) =>
+          [c.setup, c.punchline, c.author].some((t) => (t || "").toLowerCase().includes(q))
+        )
+        .sort((a, b) => b.ts - a.ts);
+    }
     return applyView(complaints, view);
-  }, [complaints, view, singleId]);
+  }, [complaints, view, singleId, q]);
+
+  function clearSearch() {
+    setQuery("");
+    setSearchOpen(false);
+  }
 
   useEffect(() => {
     const one = singleId && complaints.find((c) => c.id === singleId);
@@ -153,7 +178,9 @@ export default function App() {
 
   const emptyText = singleId
     ? "That one drifted off. It may have been removed."
-    : view === "today"
+    : q
+      ? `Nothing in the pool matches “${query.trim()}”.`
+      : view === "today"
       ? "Nobody's complained yet today. The pool is suspiciously calm. Be the first."
       : "The pool is empty. Someone go complain.";
 
@@ -165,6 +192,34 @@ export default function App() {
 
       <div className="spw-layout">
       <main className="spw-main">
+      {!singleId && (
+        <div className={`spw-topbar ${searchOpen || q ? "is-open" : ""}`}>
+          <button
+            className="spw-search-toggle"
+            onClick={() => setSearchOpen((o) => !o)}
+            aria-label={searchOpen ? "Close search" : "Search"}
+            aria-expanded={searchOpen}
+          >
+            <SearchIcon />
+          </button>
+          <label className="spw-search">
+            <SearchIcon />
+            <input
+              type="search"
+              value={query}
+              placeholder="Search posts or authors"
+              aria-label="Search posts or authors"
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Escape" && clearSearch()}
+            />
+            {q && (
+              <button className="spw-search-clear" onClick={clearSearch} aria-label="Clear search">
+                ×
+              </button>
+            )}
+          </label>
+        </div>
+      )}
             <header className="spw-header">
         <div className="spw-header-text">
           <h1 className="spw-wordmark">
@@ -249,6 +304,12 @@ export default function App() {
 
       {singleId ? (
         <p className="spw-back"><a href="/">← Back to the pool</a></p>
+      ) : q ? (
+        <p className="spw-searchline" role="status">
+          {shown.length} {shown.length === 1 ? "result" : "results"} for “{query.trim()}”
+          {" · "}
+          <button className="spw-linkbtn" onClick={clearSearch}>Clear</button>
+        </p>
       ) : (
       <div className="spw-tabs" role="tablist" aria-label="Sort complaints">
         {VIEWS.map((v) => (
