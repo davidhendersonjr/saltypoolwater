@@ -57,6 +57,8 @@ export default function App() {
   const [myVotes, setMyVotes] = useState({});
   const countdown = useCountdown();
   const [copied, setCopied] = useState(null);
+  // Set when copying isn't possible, so the link can be shown to copy by hand.
+  const [shareUrl, setShareUrl] = useState(null);
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   // Everyone's emblem + headline, keyed by author name.
@@ -69,37 +71,56 @@ export default function App() {
 
   async function share(c) {
     const url = `${window.location.origin}/api/share/${c.id}`;
-    try {
-      if (navigator.share) {
+
+    // The share sheet is worth it on a phone; on a desktop it's a detour.
+    const onPhone =
+      typeof navigator.share === "function" &&
+      window.matchMedia("(pointer: coarse)").matches;
+
+    if (onPhone) {
+      try {
         await navigator.share({ title: c.setup, url });
-      } else {
-        await navigator.clipboard.writeText(url);
-        setCopied(c.id);
-        setTimeout(() => setCopied(null), 1800);
+        return;
+      } catch (e) {
+        if (e?.name === "AbortError") return; // they closed it on purpose
+        // anything else: fall through to copying
       }
-    } catch {
-      /* user cancelled the share sheet */
     }
+
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(c.id);
+      setTimeout(() => setCopied(null), 1800);
+      return;
+    } catch {
+      /* clipboard blocked — show the link instead */
+    }
+
+    setShareUrl(url);
   }
 
+  // The feed is what people came for, so it renders as soon as it lands.
+  // Emblems and profiles fill in behind it — until they do, each author gets
+  // the shark generated from their name, which is the same size and shape.
   async function refresh() {
+    api
+      .listProfiles()
+      .then(setProfiles)
+      .catch(() => {});
+
     try {
-      const [meRes, feed, dir] = await Promise.all([
-        api.me(),
-        api.listComplaints(),
-        api.listProfiles(),
-      ]);
+      const [meRes, feed] = await Promise.all([api.me(), api.listComplaints()]);
       setMe(meRes);
       setComplaints(feed.complaints);
       setMyVotes(feed.myVotes || {});
-      setProfiles(dir);
+      setLoading(false);
+
       if (meRes?.signedIn) {
         const saved = await api.getEmblem();
         setEmblem(saved || emblemFromName(meRes.userDetails));
       }
     } catch (e) {
       setError("Couldn't reach the pool. Refresh to try again.");
-    } finally {
       setLoading(false);
     }
   }
@@ -457,6 +478,28 @@ export default function App() {
       </main>
       <Sidebar />
       </div>
+
+      {shareUrl && (
+        <div className="spw-picker-backdrop" onMouseDown={(e) => e.target === e.currentTarget && setShareUrl(null)}>
+          <section className="spw-picker spw-sharebox" role="dialog" aria-modal="true" aria-label="Share link">
+            <div className="spw-picker-head">
+              <h2>Copy this link</h2>
+              <button className="spw-picker-x" onClick={() => setShareUrl(null)} aria-label="Close">×</button>
+            </div>
+            <input
+              className="spw-cinput"
+              readOnly
+              value={shareUrl}
+              autoFocus
+              onFocus={(e) => e.target.select()}
+              aria-label="Link to this complaint"
+            />
+            <div className="spw-picker-foot">
+              <button className="spw-btn" onClick={() => setShareUrl(null)}>Done</button>
+            </div>
+          </section>
+        </div>
+      )}
 
       {openProfile && (
         <ProfilePanel

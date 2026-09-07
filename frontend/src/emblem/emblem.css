@@ -351,3 +351,8 @@
   color: var(--ink-dim, #5C7A8E);
   margin-top: 2px;
 }
+
+/* ---------- share fallback ---------- */
+
+.spw-sharebox { width: min(420px, 100%); }
+.spw-sharebox .spw-cinput { width: 100%; font-size: 13.5px; }
