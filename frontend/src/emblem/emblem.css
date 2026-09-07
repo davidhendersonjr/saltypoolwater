@@ -24,7 +24,7 @@
 
 .spw-usermenu {
   position: absolute;
-  top: 12px;
+  top: -8px;
   right: 12px;
   z-index: 20;
 }
@@ -254,4 +254,5 @@
 @media (prefers-reduced-motion: reduce) {
   .spw-usermenu-btn, .spw-usermenu-btn:hover { transition: none; transform: none; }
 }
+
 
